@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPSC Local File Injector & Downloader</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f1f3f5; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+        .card { border-radius: 12px; border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .step-badge { width: 28px; height: 28px; background: #0d6efd; color: white; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px; }
+        pre { background: #1e1e1e; color: #76d0fb; padding: 20px; border-radius: 10px; position: relative; font-size: 0.9rem; border: 1px solid #333; overflow-x: auto; }
+        .copy-btn { position: absolute; top: 10px; right: 10px; z-index: 10; }
+        .download-box { background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); color: white; border-radius: 12px; }
+        .highlight { color: #0d6efd; font-weight: 600; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+    <div class="card download-box p-4 mb-5 shadow">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="fw-bold">Step 0: Download Required Files</h2>
+                <p class="mb-0 text-white-50">First, download the JS, CSS, and JSON assets needed for the UPSC website.</p>
+                <div class="mt-3">
+                    <a href="https://www.transfernow.net/dl/upsc" target="_blank" class="btn btn-light btn-lg fw-bold px-4">
+                        <i class="bi bi-download"></i> Download Files from TransferNow
+                    </a>
+                </div>
+            </div>
+            <div class="col-md-4 mt-3 mt-md-0">
+                <div class="bg-white bg-opacity-10 p-3 rounded">
+                    <h6>Instructions:</h6>
+                    <ol class="small mb-0">
+                        <li>Download the ZIP file.</li>
+                        <li>Extract it to a dedicated folder (e.g., <code>Desktop/UPSC_Files</code>).</li>
+                        <li>Keep the filenames exactly as they are.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <header class="text-center mb-5">
+        <h1 class="fw-bold">UPSC Local Script Builder</h1>
+        <p class="text-muted">Generate your custom Tampermonkey script below.</p>
+    </header>
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card p-4 h-100 shadow-sm">
+                <h4 class="mb-4"><span class="step-badge">1</span> Configuration</h4>
+                
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Select Local Folder</label>
+                    <input type="file" id="folderPicker" webkitdirectory class="form-control">
+                    <div id="fileStatus" class="small mt-2 text-muted">Pick the folder where you extracted the files.</div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Actual Folder Path</label>
+                    <input type="text" id="manualPath" class="form-control" placeholder="C:/Users/YourName/Desktop/UPSC_Files/">
+                    <div class="form-text text-primary">Copy the folder path from your file explorer address bar.</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="card p-4 h-100 shadow-sm">
+                <h4 class="mb-4"><span class="step-badge">2</span> Copy Script</h4>
+                <div class="position-relative">
+                    <button class="btn btn-primary btn-sm copy-btn" onclick="copyCode()">Copy Script</button>
+                    <pre id="outputCode">// Script will generate here after you provide the path...</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card p-4 mt-5 shadow-sm">
+        <h3 class="mb-4 text-center">Setup Guide (Layman Version)</h3>
+        <hr>
+        <div class="row mt-4">
+            <div class="col-md-4 text-center mb-3">
+                <h5><span class="step-badge">1</span> Open Dashboard</h5>
+                <p class="small">Click the <strong>Tampermonkey icon</strong> > <strong>Dashboard</strong>.</p>
+            </div>
+            <div class="col-md-4 text-center mb-3">
+                <h5><span class="step-badge">2</span> Create New Script</h5>
+                <p class="small">Click the <strong>(+) icon</strong> tab. Delete all old code and <strong>Paste</strong> the generated script.</p>
+            </div>
+            <div class="col-md-4 text-center mb-3">
+                <h5><span class="step-badge">3</span> Save & Run</h5>
+                <p class="small">Press <strong>File > Save</strong>. Visit <code>upsconline.nic.in</code> to see changes.</p>
+            </div>
+        </div>
+
+        <div class="alert alert-warning mt-4 mb-0">
+            <h5>⚠️ Essential Permission Check</h5>
+            <p class="small">Browser security blocks local files by default. You <strong>MUST</strong> do this:</p>
+            <ol class="small mb-0">
+                <li>Go to <code>chrome://extensions</code></li>
+                <li>Find Tampermonkey, click <strong>Details</strong>.</li>
+                <li>Enable <strong>"Allow access to file URLs"</strong>.</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+    const picker = document.getElementById('folderPicker');
+    const pathInput = document.getElementById('manualPath');
+    const output = document.getElementById('outputCode');
+    const status = document.getElementById('fileStatus');
+
+    picker.addEventListener('change', e => {
+        const files = e.target.files;
+        if (files.length > 0) {
+            status.innerHTML = `<span class="text-success fw-bold">✔ Folder Loaded (${files.length} files found).</span>`;
+            updateScript();
+        }
+    });
+
+    pathInput.addEventListener('input', updateScript);
+
+    function updateScript() {
+        let rawPath = pathInput.value.trim().replace(/\\/g, '/');
+        if (!rawPath) return;
+
+        if (!rawPath.endsWith('/')) rawPath += '/';
+        const finalPath = rawPath.startsWith('file:///') ? rawPath : 'file:///' + rawPath;
+
+        const scriptTemplate = `// ==UserScript==
+// @name         UPSC Online - Local Override
+// @namespace    http://tampermonkey.net/
+// @version      1.3
+// @description  Uses local files downloaded from TransferNow
+// @author       UPSC Tool
+// @match        https://upsconline.nic.in/*
+// @run-at       document-start
+// @grant        GM_getResourceText
+// @grant        GM_addStyle
+// @resource     LOCAL_CSS ${finalPath}styles.2eaa8cb544829b6a.css
+// @require      ${finalPath}scripts.29864b8612111084.js
+// @require      ${finalPath}251.bfef7774db7bb6ad.js
+// @require      ${finalPath}main.4c4ae76ad605865a.js
+// ==/UserScript==
+
+(function() {
+    'use strict';
+    try {
+        const css = GM_getResourceText("LOCAL_CSS");
+        if (css) GM_addStyle(css);
+        console.log("UPSC: Local CSS & JS Loaded Successfully.");
+    } catch (e) {
+        console.error("Path Error: Check if 'Allow access to file URLs' is enabled in Chrome.");
+    }
+})();`;
+
+        output.textContent = scriptTemplate;
+    }
+
+    function copyCode() {
+        const text = output.textContent;
+        if (text.includes("// Script will")) {
+            alert("Please enter your folder path first!");
+            return;
+        }
+        navigator.clipboard.writeText(text);
+        alert("Script copied to clipboard! Proceed to Step 1 of the Setup Guide.");
+    }
+</script>
+
+</body>
+</html>
